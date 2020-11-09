@@ -24,8 +24,13 @@ public class LogisticAgent implements Agent {
 
     private boolean debug = true;
     private double[][] dangers;
-    private boolean[][] visited;
+    private boolean[][] isVisited;
     private boolean[][] shoot;
+    private boolean[][] isBREEZE;
+    private Player.Direction[][] isBUMP;
+    private boolean[][] isSTENCH;
+    private boolean isSCREAM;
+
 
     private LinkedList<Action> nextActions = new LinkedList<Action>();
 
@@ -38,8 +43,14 @@ public class LogisticAgent implements Agent {
         w = width;
         h = height;
         dangers = new double[w][h];
-        visited = new boolean[w][h];
+        isVisited = new boolean[w][h];
         shoot = new boolean[w][h];
+        isBREEZE = new boolean[w][h];
+        isSTENCH = new boolean[w][h];
+        isBUMP = new Player.Direction[w][h];
+//        for (Player.Direction[] i : isBUMP){
+//            System.out.println(Arrays.toString(i));
+//        }
     }
 
     /**
@@ -83,103 +94,136 @@ public class LogisticAgent implements Agent {
      * @param player The player instance
      * @return The next action
      */
-    public Action getAction(Player player) {
-        // Mark this block has visited
+
+    public Action getAction(Player player){
         int x = player.getX();
         int y = player.getY();
 
-        // Set this block as visited
-        visited[x][y] = true;
+        isVisited[x][y] = true;
 
-        // Apply actions pools
-        if (nextActions.size() > 0) {
-            return nextActions.poll();
-        }
+        tell(player);
 
-        // Grab the gold if senses glitter
-        if (player.hasGlitter()) return Action.GRAB;
-
-        // Calculate the neighbor branches
-        int[][] branches = getNeighbors(x, y);
-
-        // Shoot an arrow to every non visited tiles if senses a stench
-        if (player.hasStench() && player.hasArrows()) {
-            // Apply killer instinct
-            for(int[] branch : branches) {
-                if (!visited[branch[0]][branch[1]] && !shoot[branch[0]][branch[1]]) {
-                    shoot[branch[0]][branch[1]] = true;
-
-                    ArrayList<Action> actions = getActionsToShoot(player, branch);
-                    nextActions.addAll(actions);
-                    return nextActions.poll();
-                }
-            }
-        }
-
-        // Mark non visited neighbors has dangerous
-        if (player.hasBreeze()) {
-            boolean knowPitPosition = false;
-            // Verify if a pit was already found
-            for(int[] branch : branches) {
-                if (dangers[branch[0]][branch[1]] == 1) {
-                    knowPitPosition = true;
-                    break;
-                }
-            }
-            // Estimate the pit location
-            if (!knowPitPosition) {
-                // Increase by 50% the probability of having some danger
-                for(int[] branch : branches) {
-                    if (!visited[branch[0]][branch[1]]) {
-                        if (dangers[branch[0]][branch[1]] < 1) {
-                            dangers[branch[0]][branch[1]] += 0.5;
-                        }
-                        // Pit was found
-                        if (dangers[branch[0]][branch[1]] == 1) {
-                            knowPitPosition = true;
-                        }
-                    }
-                }
-                // If a pit was found clear the dangers from other tiles
-                if (knowPitPosition) {
-                    for (int[] branch : branches) {
-                        if (dangers[branch[0]][branch[1]]  < 1) {
-                            dangers[branch[0]][branch[1]] = 0.0;
-                        }
-                    }
-                }
-            }
-        } else {
-            // From this tile nothing has sensed so set the neighbors to dangers
-            for (int[] branch : branches) {
-                if (dangers[branch[0]][branch[1]] < 1) {
-                    dangers[branch[0]][branch[1]] = 0.0;
-                }
-            }
-        }
-
-        // Evaluate the cost of neighbor branches
-        int currentCost = 999;
-        int[] next = {-1, -1};
-        for (int[] branch : branches) {
-            int cost = getCost(player, branch);
-            if(cost < currentCost) {
-                currentCost = cost;
-                next = branch;
-            }
-        }
-        // Print the chosen tile
-        if (debug) {
-            System.out.format("Go to (%d,%d)%n", next[0], next[1]);
-        }
-
-        // Execute the action to get to the branch with less cost
-        ArrayList<Action> actions = getActionsTo(player, next);
-        nextActions.addAll(actions);
-
-        // Auto execute the first action
-        return nextActions.poll();
+        return Action.GO_FORWARD;
     }
+
+    private void tell(Player player) {
+        int x = player.getX();
+        int y = player.getY();
+
+        if(player.hasBreeze()){
+            isBREEZE[x][y] = true;
+        }
+
+        if(player.hasStench()){
+            isSTENCH[x][y] = true;
+        }
+
+        if(player.hasBump()){
+            isBUMP[x][y] = player.getDirection();
+        }
+
+        if(player.hasScream()){
+            isSCREAM = true;
+        }
+    }
+
+//    public Action getAction(Player player) {
+//        // Mark this block has visited
+//        int x = player.getX();
+//        int y = player.getY();
+//
+//        // Set this block as visited
+//        visited[x][y] = true;
+//
+//        // Apply actions pools
+//        if (nextActions.size() > 0) {
+//            return nextActions.poll();
+//        }
+//
+//        // Grab the gold if senses glitter
+//        if (player.hasGlitter()) return Action.GRAB;
+//
+//        // Calculate the neighbor branches
+//        int[][] branches = getNeighbors(x, y);
+//
+//        // Shoot an arrow to every non visited tiles if senses a stench
+//        if (player.hasStench() && player.hasArrows()) {
+//            // Apply killer instinct
+//            for(int[] branch : branches) {
+//                if (!visited[branch[0]][branch[1]] && !shoot[branch[0]][branch[1]]) {
+//                    shoot[branch[0]][branch[1]] = true;
+//
+//                    ArrayList<Action> actions = getActionsToShoot(player, branch);
+//                    nextActions.addAll(actions);
+//                    return nextActions.poll();
+//                }
+//            }
+//        }
+//
+//        // Mark non visited neighbors has dangerous
+//        if (player.hasBreeze()) {
+//            boolean knowPitPosition = false;
+//            // Verify if a pit was already found
+//            for(int[] branch : branches) {
+//                if (dangers[branch[0]][branch[1]] == 1) {
+//                    knowPitPosition = true;
+//                    break;
+//                }
+//            }
+//            // Estimate the pit location
+//            if (!knowPitPosition) {
+//                // Increase by 50% the probability of having some danger
+//                for(int[] branch : branches) {
+//                    if (!visited[branch[0]][branch[1]]) {
+//                        if (dangers[branch[0]][branch[1]] < 1) {
+//                            dangers[branch[0]][branch[1]] += 0.5;
+//                        }
+//                        // Pit was found
+//                        if (dangers[branch[0]][branch[1]] == 1) {
+//                            knowPitPosition = true;
+//                        }
+//                    }
+//                }
+//                // If a pit was found clear the dangers from other tiles
+//                if (knowPitPosition) {
+//                    for (int[] branch : branches) {
+//                        if (dangers[branch[0]][branch[1]]  < 1) {
+//                            dangers[branch[0]][branch[1]] = 0.0;
+//                        }
+//                    }
+//                }
+//            }
+//        } else {
+//            // From this tile nothing has sensed so set the neighbors to dangers
+//            for (int[] branch : branches) {
+//                if (dangers[branch[0]][branch[1]] < 1) {
+//                    dangers[branch[0]][branch[1]] = 0.0;
+//                }
+//            }
+//        }
+//
+//        // Evaluate the cost of neighbor branches
+//        int currentCost = 999;
+//        int[] next = {-1, -1};
+//        for (int[] branch : branches) {
+//            int cost = getCost(player, branch);
+//            if(cost < currentCost) {
+//                currentCost = cost;
+//                next = branch;
+//            }
+//        }
+//        // Print the chosen tile
+//        if (debug) {
+//            System.out.format("Go to (%d,%d)%n", next[0], next[1]);
+//        }
+//
+//        // Execute the action to get to the branch with less cost
+//        ArrayList<Action> actions = getActionsTo(player, next);
+//        nextActions.addAll(actions);
+//
+//        // Auto execute the first action
+//        return nextActions.poll();
+//    }
 
     /**
      * Gets the adjacent tiles of the given coordinates.
@@ -268,7 +312,7 @@ public class LogisticAgent implements Agent {
         // Start with at least one forward
         int sum = 1;
         // If found gold choose the safest path otherwise costs more to return
-        if (visited[to[0]][to[1]]) {
+        if (isVisited[to[0]][to[1]]) {
             if (player.hasGold()) sum -= 5;
             else sum += 5;
         } else {

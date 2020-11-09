@@ -24,7 +24,7 @@ public class Environment {
      * The actions that the player can take.
      */
     public enum Action {
-        GO_FORWARD, TURN_LEFT, TURN_RIGHT, GRAB, SHOOT_ARROW, NOOP, EXIT
+        GO_FORWARD, TURN_LEFT, TURN_RIGHT, GRAB, SHOOT_ARROW, EXIT
     }
 
     /**

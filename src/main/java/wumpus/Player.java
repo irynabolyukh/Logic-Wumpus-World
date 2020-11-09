@@ -12,7 +12,7 @@ import wumpus.Environment.Perception;
  */
 public class Player extends Object {
     public enum Direction {
-        N, E, S, W
+         N, E, S, W
     }
 
     private final World world;

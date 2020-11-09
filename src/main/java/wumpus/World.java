@@ -12,7 +12,7 @@ import wumpus.Environment.Perception;
  * render of it.
  */
 public class World {
-    private static final int DEFAULT_MAX_STEPS = 200;
+    private static final int DEFAULT_MAX_STEPS = 300;
     private static final int RANDOM_MAX_TRIES = 20;
     private static final int DEFAULT_GOLD = 1;
     private static final int DEFAULT_WUMPUS = 1;
@@ -260,7 +260,8 @@ public class World {
      * @return The outcome of the game
      */
     public Environment.Result getResult() {
-        if (player.isAlive() && player.hasGold() && player.getTile().getIndex() == startPosition) {
+        if (player.isAlive() && player.hasGold()){
+//                && player.getTile().getIndex() == startPosition) {
             return Environment.Result.WIN;
         }
         return Environment.Result.LOOSE;
