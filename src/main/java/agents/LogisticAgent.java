@@ -7,6 +7,7 @@ import java.util.LinkedList;
 import wumpus.Agent;
 import wumpus.Environment;
 import wumpus.Environment.Action;
+import wumpus.MyPoint;
 import wumpus.Player;
 import wumpus.Player.Direction;
 
@@ -36,8 +37,9 @@ public class LogisticAgent implements Agent {
 
     /**
      * The strategy constructor.
-     * @param width The board width
-     * @param height  The board height
+     *
+     * @param width  The board width
+     * @param height The board height
      */
     public LogisticAgent(int width, int height) {
         w = width;
@@ -55,6 +57,7 @@ public class LogisticAgent implements Agent {
 
     /**
      * Sets weather to show the debug messages or not.
+     *
      * @param value <tt>true</tt> to display messages
      */
     public void setDebug(boolean value) {
@@ -63,6 +66,7 @@ public class LogisticAgent implements Agent {
 
     /**
      * Prints the player board and debug message.
+     *
      * @param player The player instance
      */
     public void beforeAction(Player player) {
@@ -74,6 +78,7 @@ public class LogisticAgent implements Agent {
 
     /**
      * Prints the last action taken.
+     *
      * @param player The player instance
      */
     public void afterAction(Player player) {
@@ -91,40 +96,171 @@ public class LogisticAgent implements Agent {
 
     /**
      * Implements the player artificial intelligence strategy.
+     *
      * @param player The player instance
      * @return The next action
      */
 
-    public Action getAction(Player player){
+    public Action getAction(Player player) {
+
+        if (nextActions.size() > 0) {
+            return nextActions.poll();
+        }
+
+        int x = player.getX();
+        int y = player.getY();
+
+        tell(player);
+
+        if (player.hasGold()) {
+            return Action.GRAB;
+        }
+
+        int[][] neighbours = getNeighbors(x, y);
+
+        HashMap<MyPoint, Integer> neibs = new HashMap<>();
+
+        for (int[] n : neighbours) {
+            if (!isVisited[n[0]][n[1]] && isNotWumpus(n[0], n[1]) && isNotPit(n[0], n[1])) {
+
+                ArrayList<Action> actions = getActionsTo(player, n);
+                nextActions.addAll(actions);
+
+                System.out.println("no wumpus no pit not visited");
+
+                // Auto execute the first action
+                return nextActions.poll();
+            }else if(player.hasArrows() && isWumpus(n[0], n[1])){
+                ArrayList<Action> actions = getActionsToShoot(player, n);
+                nextActions.addAll(actions);
+
+                System.out.println("is wumpus");
+
+                // Auto execute the first action
+                return nextActions.poll();
+            }
+        }
+
+        for (int[] n: neighbours) {
+            if (isVisited[n[0]][n[1]]) {
+                neibs.put(new MyPoint(n[0], n[1]), 3);
+            }else if(!isVisited[n[0]][n[1]] && (isNotWumpus(n[0], n[1]) || isNotPit(n[0], n[1]))){
+                neibs.put(new MyPoint(n[0], n[1]), 5);
+            }
+        }
+
+        return Action.GO_FORWARD;
+    }
+
+    // add info about tile to 'knowledge base'
+    private void tell(Player player) {
         int x = player.getX();
         int y = player.getY();
 
         isVisited[x][y] = true;
 
-        tell(player);
-
-        return Action.GO_FORWARD;
-    }
-
-    private void tell(Player player) {
-        int x = player.getX();
-        int y = player.getY();
-
-        if(player.hasBreeze()){
+        if (player.hasBreeze()) {
             isBREEZE[x][y] = true;
         }
 
-        if(player.hasStench()){
+        if (player.hasStench()) {
             isSTENCH[x][y] = true;
         }
 
-        if(player.hasBump()){
+        if (player.hasBump()) {
             isBUMP[x][y] = player.getDirection();
         }
 
-        if(player.hasScream()){
+        if (player.hasScream()) {
             isSCREAM = true;
         }
+    }
+
+    private boolean isWumpus(int x, int y) {
+        if (isSCREAM || isVisited[x][y]) {
+            return false;
+        }
+
+        //neighbours are numbered from west to south
+        int[][] neighbours = new int[4][2];
+
+        int[] west = new int[]{x - 1, y};
+        int[] north = new int[]{x, y + 1};
+        int[] east = new int[]{x + 1, y};
+        int[] south = new int[]{x, y - 1};
+
+        if (isValid(south[0], south[1]) && isVisited[south[0]][south[1]] && isSTENCH[south[0]][south[1]]) {
+            if (isValid(east[0], east[1]) && isVisited[east[0]][east[1]] && isSTENCH[east[0]][east[1]] && isVisited[x + 1][y - 1]) {
+                return true;
+            }
+            if (isValid(west[0], west[1]) && isVisited[west[0]][west[1]] && isSTENCH[west[0]][west[1]] && isVisited[x - 1][y - 1]) {
+                return true;
+            }
+            if (isValid(north[0], north[1]) && isVisited[north[0]][north[1]] && isSTENCH[north[0]][north[1]]) {
+                return true;
+            }
+        }
+        if (isValid(north[0], north[1]) && isVisited[north[0]][north[1]] && isSTENCH[north[0]][north[1]]) {
+            if (isValid(east[0], east[1]) && isVisited[east[0]][east[1]] && isSTENCH[east[0]][east[1]] && isVisited[x + 1][y + 1]) {
+                return true;
+            }
+            if (isValid(west[0], west[1]) && isVisited[west[0]][west[1]] && isSTENCH[west[0]][west[1]] && isVisited[x - 1][y + 1]) {
+                return true;
+            }
+        }
+
+        if (isValid(east[0], east[1]) && isVisited[east[0]][east[1]] && isSTENCH[east[0]][east[1]] &&
+                isValid(west[0], west[1]) && isVisited[west[0]][west[1]] && isSTENCH[west[0]][west[1]]) {
+            return true;
+        }
+        return false;
+    }
+
+    private boolean isNotWumpus(int x, int y) {
+        if (isSCREAM || isVisited[x][y]) {
+            return true;
+        }
+
+        //neighbours are numbered from west to south
+        int[][] neighbours = new int[4][2];
+
+        neighbours[0] = new int[]{x - 1, y};
+        neighbours[1] = new int[]{x, y + 1};
+        neighbours[2] = new int[]{x + 1, y};
+        neighbours[3] = new int[]{x, y - 1};
+
+        for (int[] n : neighbours) {
+            if (isValid(n[0], n[1]) && isVisited[n[0]][n[1]] && !isSTENCH[n[0]][n[1]]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isNotPit(int x, int y) {
+
+        if (isVisited[x][y]) {
+            return true;
+        }
+
+        //neighbours are numbered from west to south
+        int[][] neighbours = new int[4][2];
+
+        neighbours[0] = new int[]{x - 1, y};
+        neighbours[1] = new int[]{x, y + 1};
+        neighbours[2] = new int[]{x + 1, y};
+        neighbours[3] = new int[]{x, y - 1};
+
+        for (int[] n : neighbours) {
+            if (isValid(n[0], n[1]) && isVisited[n[0]][n[1]] && !isBREEZE[n[0]][n[1]]) {
+                return true;
+            }
+        }
+        return false;
+    }
+
+    private boolean isValid(int x, int y) {
+        return x < w && x > -1 && y > -1 && y < h;
     }
 
 //    public Action getAction(Player player) {
@@ -227,6 +363,7 @@ public class LogisticAgent implements Agent {
 
     /**
      * Gets the adjacent tiles of the given coordinates.
+     *
      * @param x The tile X coordinate
      * @param y The tile Y coordinate
      * @return An array of 2D coordinates
@@ -242,19 +379,27 @@ public class LogisticAgent implements Agent {
 
         // Check if branch is into bounds
         if (north >= 0) nodesMap.put(Direction.N, north);
-        if (south < h)  nodesMap.put(Direction.S, south);
-        if (east < w)   nodesMap.put(Direction.E, east);
-        if (west >= 0)  nodesMap.put(Direction.W, west);
+        if (south < h) nodesMap.put(Direction.S, south);
+        if (east < w) nodesMap.put(Direction.E, east);
+        if (west >= 0) nodesMap.put(Direction.W, west);
 
         // Build the branches array
         int branch = 0;
         int[][] nodes = new int[nodesMap.size()][2];
         for (Direction direction : nodesMap.keySet()) {
             switch (direction) {
-                case N: nodes[branch] = new int[]{x, north}; break;
-                case S: nodes[branch] = new int[]{x, south}; break;
-                case E: nodes[branch] = new int[]{east, y}; break;
-                case W: nodes[branch] = new int[]{west, y}; break;
+                case N:
+                    nodes[branch] = new int[]{x, north};
+                    break;
+                case S:
+                    nodes[branch] = new int[]{x, south};
+                    break;
+                case E:
+                    nodes[branch] = new int[]{east, y};
+                    break;
+                case W:
+                    nodes[branch] = new int[]{west, y};
+                    break;
             }
             branch++;
         }
@@ -264,8 +409,9 @@ public class LogisticAgent implements Agent {
 
     /**
      * Returns the amount of turns player need to take to get into given position.
+     *
      * @param player The player's instance
-     * @param to The destination tile
+     * @param to     The destination tile
      * @return The number of turns
      */
     private int getTurns(Player player, int[] to) {
@@ -292,20 +438,21 @@ public class LogisticAgent implements Agent {
         double lenProduct = Math.hypot(from[0], from[1]) * Math.hypot(dest[0], dest[1]);
         double theta = Math.acos(dotProduct / lenProduct);
         // Inverts when facing backwards
-        if (    player.getDirection() == Direction.N && getDirection(dest) == Direction.E ||
+        if (player.getDirection() == Direction.N && getDirection(dest) == Direction.E ||
                 player.getDirection() == Direction.E && getDirection(dest) == Direction.S ||
                 player.getDirection() == Direction.S && getDirection(dest) == Direction.W ||
                 player.getDirection() == Direction.W && getDirection(dest) == Direction.N) {
             theta *= -1;
         }
         // Count how many turns
-        return (int)(theta / (Math.PI / 2));
+        return (int) (theta / (Math.PI / 2));
     }
 
     /**
      * Returns the cost for to reach the given branch.
+     *
      * @param player The player's instance
-     * @param to The destination block coordinates
+     * @param to     The destination block coordinates
      * @return The cost estimation tho reach the tile
      */
     private int getCost(Player player, int[] to) {
@@ -336,8 +483,9 @@ public class LogisticAgent implements Agent {
 
     /**
      * Returns the actions that player must take to reach the given destination.
+     *
      * @param player The player's instance
-     * @param to The destination tile coordinates
+     * @param to     The destination tile coordinates
      * @return An array of actions
      */
     private ArrayList<Action> getActionsTo(Player player, int[] to) {
@@ -353,11 +501,12 @@ public class LogisticAgent implements Agent {
 
         return actions;
     }
-    
+
     /**
      * Returns the actions that player must take to reach the given destination.
+     *
      * @param player The player's instance
-     * @param to The destination tile coordinates
+     * @param to     The destination tile coordinates
      * @return An array of actions
      */
     private ArrayList<Action> getActionsToShoot(Player player, int[] to) {
@@ -376,6 +525,7 @@ public class LogisticAgent implements Agent {
 
     /**
      * Returns the direction based on the vector coordinates
+     *
      * @param coords The 2D coordinates
      * @return The direction
      */
