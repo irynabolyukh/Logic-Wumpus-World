@@ -1,8 +1,6 @@
 package agents;
 
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.LinkedList;
+import java.util.*;
 
 import wumpus.Agent;
 import wumpus.Environment;
@@ -31,6 +29,7 @@ public class LogisticAgent implements Agent {
     private Player.Direction[][] isBUMP;
     private boolean[][] isSTENCH;
     private boolean isSCREAM;
+    private int[][] timesVisited;
 
 
     private LinkedList<Action> nextActions = new LinkedList<Action>();
@@ -44,6 +43,7 @@ public class LogisticAgent implements Agent {
     public LogisticAgent(int width, int height) {
         w = width;
         h = height;
+        timesVisited = new int[w][h];
         dangers = new double[w][h];
         isVisited = new boolean[w][h];
         shoot = new boolean[w][h];
@@ -112,13 +112,13 @@ public class LogisticAgent implements Agent {
 
         tell(player);
 
-        if (player.hasGold()) {
+        if (player.hasGlitter()) {
             return Action.GRAB;
         }
 
         int[][] neighbours = getNeighbors(x, y);
 
-        HashMap<MyPoint, Integer> neibs = new HashMap<>();
+        ArrayList<MyPoint> neibs = new ArrayList<MyPoint>();
 
         for (int[] n : neighbours) {
             if (!isVisited[n[0]][n[1]] && isNotWumpus(n[0], n[1]) && isNotPit(n[0], n[1])) {
@@ -128,7 +128,6 @@ public class LogisticAgent implements Agent {
 
                 System.out.println("no wumpus no pit not visited");
 
-                // Auto execute the first action
                 return nextActions.poll();
             }else if(player.hasArrows() && isWumpus(n[0], n[1])){
                 ArrayList<Action> actions = getActionsToShoot(player, n);
@@ -136,26 +135,32 @@ public class LogisticAgent implements Agent {
 
                 System.out.println("is wumpus");
 
-                // Auto execute the first action
                 return nextActions.poll();
             }
         }
 
         for (int[] n: neighbours) {
             if (isVisited[n[0]][n[1]]) {
-                neibs.put(new MyPoint(n[0], n[1]), 3);
+                neibs.add(new MyPoint(n[0], n[1], timesVisited[n[0]][n[1]] == 3 ? 1 : 5));
             }else if(!isVisited[n[0]][n[1]] && (isNotWumpus(n[0], n[1]) || isNotPit(n[0], n[1]))){
-                neibs.put(new MyPoint(n[0], n[1]), 5);
+                neibs.add(new MyPoint(n[0], n[1], 3));
             }
         }
 
-        return Action.GO_FORWARD;
+        Collections.sort(neibs, Collections.reverseOrder());
+
+        int[] next = {neibs.get(0).getX(), neibs.get(0).getY()};
+        ArrayList<Action> actions = getActionsTo(player, next);
+        nextActions.addAll(actions);
+        return nextActions.poll();
+//        return Action.GO_FORWARD;
     }
 
     // add info about tile to 'knowledge base'
     private void tell(Player player) {
         int x = player.getX();
         int y = player.getY();
+        timesVisited[x][y] +=1;
 
         isVisited[x][y] = true;
 
@@ -180,9 +185,6 @@ public class LogisticAgent implements Agent {
         if (isSCREAM || isVisited[x][y]) {
             return false;
         }
-
-        //neighbours are numbered from west to south
-        int[][] neighbours = new int[4][2];
 
         int[] west = new int[]{x - 1, y};
         int[] north = new int[]{x, y + 1};
@@ -213,6 +215,94 @@ public class LogisticAgent implements Agent {
                 isValid(west[0], west[1]) && isVisited[west[0]][west[1]] && isSTENCH[west[0]][west[1]]) {
             return true;
         }
+
+        //якщо ми під вампусом і повернуті на захід впираємось в стіну
+        if (isValid(south[0], south[1]) && isVisited[south[0]][south[1]] && isSTENCH[south[0]][south[1]]
+                && (!isValid(south[0], south[1] - 1) || isVisited[south[0]][south[1] - 1])){
+
+            if((isVisited[x+1][y-1] && (isBUMP[south[0]][south[1]] == Direction.W))
+                || (isVisited[x-1][y-1] && (isBUMP[south[0]][south[1]] == Direction.E))){
+                return true;
+            }
+        }
+
+
+//        if (isValid(south[0], south[1]) && isVisited[south[0]][south[1]]
+//                && isVisited[x+1][y-1] && isSTENCH[south[0]][south[1]] && (isBUMP[south[0]][south[1]] == Direction.W)
+//                && (!isValid(south[0], south[1] - 1) || isVisited[south[0]][south[1] - 1])){
+//                return true;
+//        }
+//
+//        if (isValid(south[0], south[1]) && isVisited[south[0]][south[1]]
+//                && isVisited[x-1][y-1] && isSTENCH[south[0]][south[1]] && (isBUMP[south[0]][south[1]] == Direction.E)
+//                && (!isValid(south[0], south[1] - 1) || isVisited[south[0]][south[1] - 1])){
+//            return true;
+//        }
+
+        if (isValid(north[0], north[1]) && isVisited[north[0]][north[1]] && isSTENCH[north[0]][north[1]]
+                && (!isValid(north[0], north[1] + 1) || isVisited[north[0]][north[1] + 1])){
+
+            if((isVisited[x+1][y+1] && (isBUMP[north[0]][north[1]] == Direction.W))
+                || (isVisited[x-1][y+1] && (isBUMP[north[0]][north[1]] == Direction.E))){
+                return true;
+            }
+        }
+
+
+//        if (isValid(north[0], north[1]) && isVisited[north[0]][north[1]]
+//                && isVisited[x+1][y+1] && isSTENCH[north[0]][north[1]] && (isBUMP[north[0]][north[1]] == Direction.W)
+//                && (!isValid(north[0], north[1] + 1) || isVisited[north[0]][north[1] + 1])){
+//            return true;
+//        }
+//
+//        if (isValid(north[0], north[1]) && isVisited[north[0]][north[1]]
+//                && isVisited[x-1][y+1] && isSTENCH[north[0]][north[1]] && (isBUMP[north[0]][north[1]] == Direction.E)
+//                && (!isValid(north[0], north[1] + 1) || isVisited[north[0]][north[1] + 1])){
+//            return true;
+//        }
+
+        if (isValid(west[0], west[1]) && isVisited[west[0]][west[1]] && isSTENCH[west[0]][west[1]]
+                && (!isValid(west[0]-1, west[1]) || isVisited[west[0]-1][west[1]])){
+
+            if ((isVisited[x-1][y-1] && (isBUMP[west[0]][west[1]] == Direction.N))
+                || (isVisited[x-1][y+1] && isBUMP[west[0]][west[1]] == Direction.S)){
+                return true;
+            }
+        }
+
+//        if (isValid(west[0], west[1]) && isVisited[west[0]][west[1]]
+//                && isVisited[x-1][y-1] && isSTENCH[west[0]][west[1]] && (isBUMP[west[0]][west[1]] == Direction.N)
+//                && (!isValid(west[0]-1, west[1]) || isVisited[west[0]-1][west[1]])){
+//            return true;
+//        }
+//
+//        if (isValid(west[0], west[1]) && isVisited[west[0]][west[1]]
+//                && isVisited[x-1][y+1] && isSTENCH[west[0]][west[1]] && (isBUMP[west[0]][west[1]] == Direction.S)
+//                && (!isValid(west[0]-1, west[1]) || isVisited[west[0]-1][west[1]])){
+//            return true;
+//        }
+
+        if (isValid(east[0], east[1]) && isVisited[east[0]][east[1]] && isSTENCH[east[0]][east[1]]
+                && (!isValid(east[0]+1, east[1]) || isVisited[east[0]+1][east[1]])){
+
+            if((isVisited[x+1][y-1] && (isBUMP[east[0]][east[1]] == Direction.N))
+                || (isVisited[x+1][y+1] && (isBUMP[east[0]][east[1]] == Direction.S))) {
+                return true;
+            }
+        }
+
+//        if (isValid(east[0], east[1]) && isVisited[east[0]][east[1]]
+//                && isVisited[x+1][y-1] && isSTENCH[east[0]][east[1]] && (isBUMP[east[0]][east[1]] == Direction.N)
+//                && (!isValid(east[0]+1, east[1]) || isVisited[east[0]+1][east[1]])){
+//            return true;
+//        }
+//
+//        if (isValid(east[0], east[1]) && isVisited[east[0]][east[1]]
+//                && isVisited[x+1][y+1] && isSTENCH[east[0]][east[1]] && (isBUMP[east[0]][east[1]] == Direction.S)
+//                && (!isValid(east[0]+1, east[1]) || isVisited[east[0]+1][east[1]])){
+//            return true;
+//        }
+
         return false;
     }
 

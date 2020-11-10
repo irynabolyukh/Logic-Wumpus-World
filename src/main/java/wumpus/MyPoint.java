@@ -1,16 +1,14 @@
 package wumpus;
 
-import java.util.Objects;
+public class MyPoint implements Comparable<MyPoint>{
 
-public class MyPoint {
+
+    public Integer getValue() {
+        return value;
+    }
 
     private int x,y;
-//    private Direction d;
-
-    public MyPoint(int x, int y){
-        this.x = x;
-        this.y = y;
-    }
+    private Integer value;
 
     public int getX() {
         return x;
@@ -20,49 +18,23 @@ public class MyPoint {
         return y;
     }
 
-//    public Direction getD() {
-//        return d;
-//    }
+    public MyPoint(int x, int y, Integer value){
+        this.x = x;
+        this.y = y;
+        this.value = value;
+    }
 
-//    public MyPoint moveLeft(){
-//        return (new MyPoint(x-1, y, Direction.LEFT));
-//    }
-//
-//    public MyPoint moveRight(){
-//        return (new MyPoint(x+1, y, Direction.RIGHT));
-//    }
-//
-//    public MyPoint moveUp(){
-//        return (new MyPoint(x, y-1, Direction.UP));
-//    }
-//
-//    public MyPoint moveDown(){
-//        return (new MyPoint(x, y+1, Direction.DOWN));
-//    }
-
-    @Override
-    public boolean equals(Object o) {
-        if (this == o) return true;
-        if (o == null || getClass() != o.getClass()) return false;
-        MyPoint myPoint = (MyPoint) o;
-        return x == myPoint.x &&
-                y == myPoint.y;
+    public MyPoint(Integer value){
+        this.value = value;
     }
 
     @Override
-    public int hashCode() {
-        return Objects.hash(x, y);
+    public int compareTo(MyPoint o) {
+        return this.getValue().compareTo(o.getValue());
     }
 
     public String toString() {
-        return "x: " + getX() + ", y: " + getY();
+        return "point: " + getX() + ", " + getY() + ", value: " + getValue();
     }
 
-    public enum Direction{
-        DOWN,
-        RIGHT,
-        UP,
-        LEFT,
-        STILL
-    }
 }
