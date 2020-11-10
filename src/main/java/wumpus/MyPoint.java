@@ -24,10 +24,6 @@ public class MyPoint implements Comparable<MyPoint>{
         this.value = value;
     }
 
-    public MyPoint(Integer value){
-        this.value = value;
-    }
-
     @Override
     public int compareTo(MyPoint o) {
         return this.getValue().compareTo(o.getValue());

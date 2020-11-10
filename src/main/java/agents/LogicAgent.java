@@ -18,7 +18,7 @@ import wumpus.Player.Direction;
  * H5: Choose the path that surely does not have a danger;
  * H5: If have found the gold get back by the visited path;
  */
-public class LogisticAgent implements Agent {
+public class LogicAgent implements Agent {
     private int w, h;
 
     private boolean debug = true;
@@ -40,7 +40,7 @@ public class LogisticAgent implements Agent {
      * @param width  The board width
      * @param height The board height
      */
-    public LogisticAgent(int width, int height) {
+    public LogicAgent(int width, int height) {
         w = width;
         h = height;
         timesVisited = new int[w][h];
@@ -50,9 +50,6 @@ public class LogisticAgent implements Agent {
         isBREEZE = new boolean[w][h];
         isSTENCH = new boolean[w][h];
         isBUMP = new Player.Direction[w][h];
-//        for (Player.Direction[] i : isBUMP){
-//            System.out.println(Arrays.toString(i));
-//        }
     }
 
     /**
@@ -122,19 +119,12 @@ public class LogisticAgent implements Agent {
 
         for (int[] n : neighbours) {
             if (!isVisited[n[0]][n[1]] && isNotWumpus(n[0], n[1]) && isNotPit(n[0], n[1])) {
-
                 ArrayList<Action> actions = getActionsTo(player, n);
                 nextActions.addAll(actions);
-
-                System.out.println("no wumpus no pit not visited");
-
                 return nextActions.poll();
             }else if(player.hasArrows() && isWumpus(n[0], n[1])){
                 ArrayList<Action> actions = getActionsToShoot(player, n);
                 nextActions.addAll(actions);
-
-                System.out.println("is wumpus");
-
                 return nextActions.poll();
             }
         }
@@ -152,8 +142,8 @@ public class LogisticAgent implements Agent {
         int[] next = {neibs.get(0).getX(), neibs.get(0).getY()};
         ArrayList<Action> actions = getActionsTo(player, next);
         nextActions.addAll(actions);
+
         return nextActions.poll();
-//        return Action.GO_FORWARD;
     }
 
     // add info about tile to 'knowledge base'
@@ -216,92 +206,41 @@ public class LogisticAgent implements Agent {
             return true;
         }
 
-        //якщо ми під вампусом і повернуті на захід впираємось в стіну
         if (isValid(south[0], south[1]) && isVisited[south[0]][south[1]] && isSTENCH[south[0]][south[1]]
                 && (!isValid(south[0], south[1] - 1) || isVisited[south[0]][south[1] - 1])){
 
-            if((isVisited[x+1][y-1] && (isBUMP[south[0]][south[1]] == Direction.W))
-                || (isVisited[x-1][y-1] && (isBUMP[south[0]][south[1]] == Direction.E))){
+            if((isValid(x+1,y-1) && isVisited[x+1][y-1] && (isBUMP[south[0]][south[1]] == Direction.W))
+                || (isValid(x-1,y-1) && isVisited[x-1][y-1] && (isBUMP[south[0]][south[1]] == Direction.E))){
                 return true;
             }
         }
-
-
-//        if (isValid(south[0], south[1]) && isVisited[south[0]][south[1]]
-//                && isVisited[x+1][y-1] && isSTENCH[south[0]][south[1]] && (isBUMP[south[0]][south[1]] == Direction.W)
-//                && (!isValid(south[0], south[1] - 1) || isVisited[south[0]][south[1] - 1])){
-//                return true;
-//        }
-//
-//        if (isValid(south[0], south[1]) && isVisited[south[0]][south[1]]
-//                && isVisited[x-1][y-1] && isSTENCH[south[0]][south[1]] && (isBUMP[south[0]][south[1]] == Direction.E)
-//                && (!isValid(south[0], south[1] - 1) || isVisited[south[0]][south[1] - 1])){
-//            return true;
-//        }
 
         if (isValid(north[0], north[1]) && isVisited[north[0]][north[1]] && isSTENCH[north[0]][north[1]]
                 && (!isValid(north[0], north[1] + 1) || isVisited[north[0]][north[1] + 1])){
 
-            if((isVisited[x+1][y+1] && (isBUMP[north[0]][north[1]] == Direction.W))
-                || (isVisited[x-1][y+1] && (isBUMP[north[0]][north[1]] == Direction.E))){
+            if((isValid(x+1,y+1) && isVisited[x+1][y+1] && (isBUMP[north[0]][north[1]] == Direction.W))
+                || (isValid(x-1,y+1) && isVisited[x-1][y+1] && (isBUMP[north[0]][north[1]] == Direction.E))){
                 return true;
             }
         }
-
-
-//        if (isValid(north[0], north[1]) && isVisited[north[0]][north[1]]
-//                && isVisited[x+1][y+1] && isSTENCH[north[0]][north[1]] && (isBUMP[north[0]][north[1]] == Direction.W)
-//                && (!isValid(north[0], north[1] + 1) || isVisited[north[0]][north[1] + 1])){
-//            return true;
-//        }
-//
-//        if (isValid(north[0], north[1]) && isVisited[north[0]][north[1]]
-//                && isVisited[x-1][y+1] && isSTENCH[north[0]][north[1]] && (isBUMP[north[0]][north[1]] == Direction.E)
-//                && (!isValid(north[0], north[1] + 1) || isVisited[north[0]][north[1] + 1])){
-//            return true;
-//        }
 
         if (isValid(west[0], west[1]) && isVisited[west[0]][west[1]] && isSTENCH[west[0]][west[1]]
                 && (!isValid(west[0]-1, west[1]) || isVisited[west[0]-1][west[1]])){
 
-            if ((isVisited[x-1][y-1] && (isBUMP[west[0]][west[1]] == Direction.N))
-                || (isVisited[x-1][y+1] && isBUMP[west[0]][west[1]] == Direction.S)){
+            if ((isValid(x-1,y-1) && isVisited[x-1][y-1] && (isBUMP[west[0]][west[1]] == Direction.N))
+                || (isValid(x-1,y+1) && isVisited[x-1][y+1] && (isBUMP[west[0]][west[1]] == Direction.S))){
                 return true;
             }
         }
-
-//        if (isValid(west[0], west[1]) && isVisited[west[0]][west[1]]
-//                && isVisited[x-1][y-1] && isSTENCH[west[0]][west[1]] && (isBUMP[west[0]][west[1]] == Direction.N)
-//                && (!isValid(west[0]-1, west[1]) || isVisited[west[0]-1][west[1]])){
-//            return true;
-//        }
-//
-//        if (isValid(west[0], west[1]) && isVisited[west[0]][west[1]]
-//                && isVisited[x-1][y+1] && isSTENCH[west[0]][west[1]] && (isBUMP[west[0]][west[1]] == Direction.S)
-//                && (!isValid(west[0]-1, west[1]) || isVisited[west[0]-1][west[1]])){
-//            return true;
-//        }
 
         if (isValid(east[0], east[1]) && isVisited[east[0]][east[1]] && isSTENCH[east[0]][east[1]]
                 && (!isValid(east[0]+1, east[1]) || isVisited[east[0]+1][east[1]])){
 
-            if((isVisited[x+1][y-1] && (isBUMP[east[0]][east[1]] == Direction.N))
-                || (isVisited[x+1][y+1] && (isBUMP[east[0]][east[1]] == Direction.S))) {
+            if((isValid(x+1,y-1) && isVisited[x+1][y-1] && (isBUMP[east[0]][east[1]] == Direction.N))
+                || (isValid(x+1,y+1) && isVisited[x+1][y+1] && (isBUMP[east[0]][east[1]] == Direction.S))) {
                 return true;
             }
         }
-
-//        if (isValid(east[0], east[1]) && isVisited[east[0]][east[1]]
-//                && isVisited[x+1][y-1] && isSTENCH[east[0]][east[1]] && (isBUMP[east[0]][east[1]] == Direction.N)
-//                && (!isValid(east[0]+1, east[1]) || isVisited[east[0]+1][east[1]])){
-//            return true;
-//        }
-//
-//        if (isValid(east[0], east[1]) && isVisited[east[0]][east[1]]
-//                && isVisited[x+1][y+1] && isSTENCH[east[0]][east[1]] && (isBUMP[east[0]][east[1]] == Direction.S)
-//                && (!isValid(east[0]+1, east[1]) || isVisited[east[0]+1][east[1]])){
-//            return true;
-//        }
 
         return false;
     }
@@ -352,104 +291,6 @@ public class LogisticAgent implements Agent {
     private boolean isValid(int x, int y) {
         return x < w && x > -1 && y > -1 && y < h;
     }
-
-//    public Action getAction(Player player) {
-//        // Mark this block has visited
-//        int x = player.getX();
-//        int y = player.getY();
-//
-//        // Set this block as visited
-//        visited[x][y] = true;
-//
-//        // Apply actions pools
-//        if (nextActions.size() > 0) {
-//            return nextActions.poll();
-//        }
-//
-//        // Grab the gold if senses glitter
-//        if (player.hasGlitter()) return Action.GRAB;
-//
-//        // Calculate the neighbor branches
-//        int[][] branches = getNeighbors(x, y);
-//
-//        // Shoot an arrow to every non visited tiles if senses a stench
-//        if (player.hasStench() && player.hasArrows()) {
-//            // Apply killer instinct
-//            for(int[] branch : branches) {
-//                if (!visited[branch[0]][branch[1]] && !shoot[branch[0]][branch[1]]) {
-//                    shoot[branch[0]][branch[1]] = true;
-//
-//                    ArrayList<Action> actions = getActionsToShoot(player, branch);
-//                    nextActions.addAll(actions);
-//                    return nextActions.poll();
-//                }
-//            }
-//        }
-//
-//        // Mark non visited neighbors has dangerous
-//        if (player.hasBreeze()) {
-//            boolean knowPitPosition = false;
-//            // Verify if a pit was already found
-//            for(int[] branch : branches) {
-//                if (dangers[branch[0]][branch[1]] == 1) {
-//                    knowPitPosition = true;
-//                    break;
-//                }
-//            }
-//            // Estimate the pit location
-//            if (!knowPitPosition) {
-//                // Increase by 50% the probability of having some danger
-//                for(int[] branch : branches) {
-//                    if (!visited[branch[0]][branch[1]]) {
-//                        if (dangers[branch[0]][branch[1]] < 1) {
-//                            dangers[branch[0]][branch[1]] += 0.5;
-//                        }
-//                        // Pit was found
-//                        if (dangers[branch[0]][branch[1]] == 1) {
-//                            knowPitPosition = true;
-//                        }
-//                    }
-//                }
-//                // If a pit was found clear the dangers from other tiles
-//                if (knowPitPosition) {
-//                    for (int[] branch : branches) {
-//                        if (dangers[branch[0]][branch[1]]  < 1) {
-//                            dangers[branch[0]][branch[1]] = 0.0;
-//                        }
-//                    }
-//                }
-//            }
-//        } else {
-//            // From this tile nothing has sensed so set the neighbors to dangers
-//            for (int[] branch : branches) {
-//                if (dangers[branch[0]][branch[1]] < 1) {
-//                    dangers[branch[0]][branch[1]] = 0.0;
-//                }
-//            }
-//        }
-//
-//        // Evaluate the cost of neighbor branches
-//        int currentCost = 999;
-//        int[] next = {-1, -1};
-//        for (int[] branch : branches) {
-//            int cost = getCost(player, branch);
-//            if(cost < currentCost) {
-//                currentCost = cost;
-//                next = branch;
-//            }
-//        }
-//        // Print the chosen tile
-//        if (debug) {
-//            System.out.format("Go to (%d,%d)%n", next[0], next[1]);
-//        }
-//
-//        // Execute the action to get to the branch with less cost
-//        ArrayList<Action> actions = getActionsTo(player, next);
-//        nextActions.addAll(actions);
-//
-//        // Auto execute the first action
-//        return nextActions.poll();
-//    }
 
     /**
      * Gets the adjacent tiles of the given coordinates.
@@ -536,39 +377,6 @@ public class LogisticAgent implements Agent {
         }
         // Count how many turns
         return (int) (theta / (Math.PI / 2));
-    }
-
-    /**
-     * Returns the cost for to reach the given branch.
-     *
-     * @param player The player's instance
-     * @param to     The destination block coordinates
-     * @return The cost estimation tho reach the tile
-     */
-    private int getCost(Player player, int[] to) {
-        // Start with at least one forward
-        int sum = 1;
-        // If found gold choose the safest path otherwise costs more to return
-        if (isVisited[to[0]][to[1]]) {
-            if (player.hasGold()) sum -= 5;
-            else sum += 5;
-        } else {
-            // If senses a breeze avoid unvisited path
-            if (player.hasBreeze()) {
-                if (dangers[to[0]][to[1]] < 1) {
-                    sum += 10;
-                } else if (dangers[to[0]][to[1]] == 1) {
-                    // Avoid tiles marked as 100% danger
-                    sum += 100;
-                }
-            }
-        }
-
-        // The amount fo turns to take
-        int turns = getTurns(player, to);
-        sum += Math.abs(turns);
-
-        return sum;
     }
 
     /**

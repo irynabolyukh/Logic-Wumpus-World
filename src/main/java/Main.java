@@ -1,4 +1,4 @@
-import agents.LogisticAgent;
+import agents.LogicAgent;
 import wumpus.Agent;
 import wumpus.World;
 
@@ -15,14 +15,14 @@ public class Main {
             System.out.println("Hunt the Wumpus!");
 
             // Start and execute the AI agent
-            Agent agent = new LogisticAgent(world.getWidth(), world.getHeight());
+            Agent agent = new LogicAgent(world.getWidth(), world.getHeight());
             world.execute(agent);
 
             // Print the board and score table
             System.out.println("Board:");
             System.out.println(world.renderAll());
 
-            System.out.format("Results for %s:%n", world.getAgentName());
+            System.out.format("Results:%n");
             System.out.println(world.renderScore());
         } catch (Exception error) {
             error.printStackTrace();

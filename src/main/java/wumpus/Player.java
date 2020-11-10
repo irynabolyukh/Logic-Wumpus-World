@@ -55,7 +55,7 @@ public class Player extends Object {
      * Resets the player state.
      */
     protected void reset() {
-        arrows = 3;
+        arrows = 1;
         gold = false;
         direction = Direction.E;
         actions.clear();
