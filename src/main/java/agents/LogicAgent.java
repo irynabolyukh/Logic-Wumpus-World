@@ -22,9 +22,7 @@ public class LogicAgent implements Agent {
     private int w, h;
 
     private boolean debug = true;
-    private double[][] dangers;
     private boolean[][] isVisited;
-    private boolean[][] shoot;
     private boolean[][] isBREEZE;
     private Player.Direction[][] isBUMP;
     private boolean[][] isSTENCH;
@@ -44,9 +42,7 @@ public class LogicAgent implements Agent {
         w = width;
         h = height;
         timesVisited = new int[w][h];
-        dangers = new double[w][h];
         isVisited = new boolean[w][h];
-        shoot = new boolean[w][h];
         isBREEZE = new boolean[w][h];
         isSTENCH = new boolean[w][h];
         isBUMP = new Player.Direction[w][h];
@@ -103,18 +99,14 @@ public class LogicAgent implements Agent {
         if (nextActions.size() > 0) {
             return nextActions.poll();
         }
-
         int x = player.getX();
         int y = player.getY();
-
         tell(player);
 
         if (player.hasGlitter()) {
             return Action.GRAB;
         }
-
         int[][] neighbours = getNeighbors(x, y);
-
         ArrayList<MyPoint> neibs = new ArrayList<MyPoint>();
 
         for (int[] n : neighbours) {
@@ -128,7 +120,6 @@ public class LogicAgent implements Agent {
                 return nextActions.poll();
             }
         }
-
         for (int[] n: neighbours) {
             if (isVisited[n[0]][n[1]]) {
                 neibs.add(new MyPoint(n[0], n[1], timesVisited[n[0]][n[1]] == 3 ? 1 : 5));
@@ -136,13 +127,10 @@ public class LogicAgent implements Agent {
                 neibs.add(new MyPoint(n[0], n[1], 3));
             }
         }
-
         Collections.sort(neibs, Collections.reverseOrder());
-
         int[] next = {neibs.get(0).getX(), neibs.get(0).getY()};
         ArrayList<Action> actions = getActionsTo(player, next);
         nextActions.addAll(actions);
-
         return nextActions.poll();
     }
 
