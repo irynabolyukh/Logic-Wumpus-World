@@ -3,6 +3,7 @@ Hunt the Wumpus
 
 Artificial intelligence agent for the Hunt the Wumpus game.
 
+##_**AI Agent in our case is Logic.**_
 
 AI Agent
 --------
